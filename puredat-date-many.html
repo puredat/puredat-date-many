@@ -1,0 +1,202 @@
+<link rel="import" href="bower_components/polymer/polymer.html">
+<link rel="import" href="bower_components/puredat-date/puredat-date.html">
+<link rel="import" href="bower_components/puredat-paper-input-autocomplete-chips/paper-input-autocomplete-chips.html">
+<!--
+	`puredat-date-many` "STRING" type, "MANY" cardinality widget.
+	
+	@demo demo/index.html 
+-->
+<dom-module id="puredat-date-many">
+	<template>
+		<style>
+			paper-input-autocomplete-chips {
+				float:left;
+				--paper-input-container: {
+					padding-right: 10px;
+				}
+			}
+			
+			puredat-date{
+				--paper-input-container: {
+					display: none;
+				}
+			}
+
+			iron-icon {
+				float: left;
+				margin-top: 20px;
+			}
+
+			puredat-date {
+				clear:both;
+			}
+		</style>
+
+		<paper-input-autocomplete-chips
+						tabindex="-1"
+						no-chip-image
+						no-label-float
+						type="text"
+						maxlength="[[maxLength]]"
+						max-selected-items="100"
+						label="[[label]]"
+						readonly$="[[readOnly]]"
+						error-message="[[errorMessage]]"
+						invalid="[[_isInvalid(errorMessage)]]"
+						allowed-pattern="[[pattern]]"
+						allow-select-unknown-token
+						on-selected-objects-changed="_selectedChanged"
+						data-lng$="{{item}}">
+		</paper-input-autocomplete-chips>
+		<paper-icon-button 
+			icon="vaadin-date-picker:event"
+			disabled$="[[readOnly]]"
+			on-click="_openDatePicker"></paper-icon-button>
+		<puredat-date store-date-format="[[storeDateFormat]]" value="{{activeValue}}"></puredat-date>
+	</template>
+	
+	<script>
+		Polymer({
+			is: 'puredat-date-many',
+			
+			properties: {
+		        /** Name. */
+				name: {
+					type: String
+				},
+				
+				/** Descriptive label. */
+				label: {
+					type: String
+				},
+				
+				/** Value. */
+				value: {
+					type: Array,
+					observer: '_valueChanged',
+					value: function(){
+						return [];
+					}
+				},
+				
+				/** Error message. */
+				errorMessage: {
+					type: String
+				},
+				
+				/** Number of columns in a row of 10 columns. */
+				cols: {
+					type: Number,
+					value: 5
+				},
+				
+				/** Read only. */
+				readOnly: {
+					type: Boolean,
+					value: false
+				},
+
+				/** Allowed pattern. For example: [a-zA-Z]. */
+				pattern: {
+					type: String
+				},
+
+				storeDateFormat: {
+					type: String,
+					value: "YYYY-MM-DD"
+				},
+
+				displayDateFormat: {
+					type: String,
+					value: "DD/MM/YYYY"
+				},
+
+				datePicker: {
+					type: Object,
+					value: function(){
+						return {};
+					}
+				},
+
+				activeValue: {
+					type: String,
+					observer: '_activeValueChanged'
+				},
+
+				selecting: {
+					type: Boolean,
+					value: false
+				}
+		    },
+
+		    ready(){
+		    	this.datePicker = this.querySelector("#datePicker");
+		    	this.chipElement = this.querySelector("paper-input-autocomplete-chips");
+		    	this.activeValue = this._getDefaultValue();
+		    },
+
+		    _getDefaultValue: function(){
+		    	var tmp = new Date();
+		    	return tmp.getYear() + "-" + (tmp.getMonth()+1 < 10 ? "0"+(tmp.getMonth()+1) : tmp.getMonth()) + "-" + (tmp.getDate() < 10 ? "0"+tmp.getDate() : tmp.getDate());
+		    },
+
+		     /**
+			 * Returns if the field is valid.
+			 * @param {String} errorMessage The error message.
+			 * @return {Boolean} If the input field is valid.
+			 */
+			_isInvalid: function(errorMessage) {
+				return errorMessage != null
+						&& errorMessage != "";
+			},
+
+			_openDatePicker: function(){
+				this.datePicker.click();
+			},
+
+			_activeValueChanged: function(value){
+				if(this.chipElement && value){
+					this.selecting = true;
+
+					var newValue = [];
+					this.chipElement.appendSelectedObject({text:value});
+					for(var i = 0;i < this.value.length;i++) newValue.push(this.value[i]);
+					newValue.push(value);
+					this.set("value",newValue);
+
+					this.selecting = false;
+				}
+			},
+
+			_selectedChanged: function(event){
+				console.log(event);
+				if(this.selecting) return;
+
+				if(event.srcElement || event.target){
+					var src = event.srcElement || event.target;
+					if(src.selectedObjects){
+						this.selecting = true;
+						var newValue = [];
+						for(var i = 0;i < src.selectedObjects.length;i++){
+							newValue.push(src.selectedObjects[i].text);
+						}
+						this.set("value",newValue);
+						this.selecting = false;
+					}
+				}
+			},
+
+			_valueChanged: function(value){
+				if(this.selecting) return;
+
+				if(value && value.length > 0 && this.chipElement){
+					this.selecting = true;
+					this.chipElement.selectedObjects = [];
+					for(var i = 0;i < value.length;i++) this.chipElement.appendSelectedObject({text:value[i]});
+					this.selecting = false;
+				}
+			}
+
+		});
+	</script>
+</dom-module>
