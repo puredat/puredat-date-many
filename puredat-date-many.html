@@ -52,7 +52,7 @@
 			icon="vaadin-date-picker:event"
 			disabled$="[[readOnly]]"
 			on-click="_openDatePicker"></paper-icon-button>
-		<puredat-date store-date-format="[[storeDateFormat]]" value="{{activeValue}}"></puredat-date>
+		<puredat-date store-date-format="[[storeDateFormat]]" display-date-format="[[displayDateFormat]]" value="{{activeValue}}"></puredat-date>
 	</template>
 	
 	<script>
@@ -71,7 +71,7 @@
 				},
 				
 				/** Value. */
-				value: {
+				values: {
 					type: Array,
 					observer: '_valueChanged',
 					value: function(){
@@ -108,7 +108,8 @@
 
 				displayDateFormat: {
 					type: String,
-					value: "DD/MM/YYYY"
+					value: "DD/MM/YYYY",
+					observer: '_displayDateFormatChanged'
 				},
 
 				datePicker: {
@@ -132,12 +133,7 @@
 		    ready(){
 		    	this.datePicker = this.querySelector("#datePicker");
 		    	this.chipElement = this.querySelector("paper-input-autocomplete-chips");
-		    	this.activeValue = this._getDefaultValue();
-		    },
-
-		    _getDefaultValue: function(){
-		    	var tmp = new Date();
-		    	return tmp.getYear() + "-" + (tmp.getMonth()+1 < 10 ? "0"+(tmp.getMonth()+1) : tmp.getMonth()) + "-" + (tmp.getDate() < 10 ? "0"+tmp.getDate() : tmp.getDate());
+		    	this.activeValue = null;
 		    },
 
 		     /**
@@ -155,32 +151,31 @@
 			},
 
 			_activeValueChanged: function(value){
+				if(this.selecting) return;
+
 				if(this.chipElement && value){
 					this.selecting = true;
-
 					var newValue = [];
-					this.chipElement.appendSelectedObject({text:value});
-					for(var i = 0;i < this.value.length;i++) newValue.push(this.value[i]);
+					for(var i = 0;i < this.values.length;i++) newValue.push(this.values[i]);
 					newValue.push(value);
-					this.set("value",newValue);
-
+					this._setValues(newValue);
 					this.selecting = false;
 				}
 			},
 
 			_selectedChanged: function(event){
-				console.log(event);
 				if(this.selecting) return;
 
-				if(event.srcElement || event.target){
+				if((event.srcElement || event.target) && this.chipElement){
 					var src = event.srcElement || event.target;
 					if(src.selectedObjects){
 						this.selecting = true;
 						var newValue = [];
 						for(var i = 0;i < src.selectedObjects.length;i++){
-							newValue.push(src.selectedObjects[i].text);
+							var dateToStore = moment(src.selectedObjects[i].text,this.displayDateFormat).format(this.storeDateFormat);
+							newValue.push(dateToStore);
 						}
-						this.set("value",newValue);
+						this._setValues(newValue);
 						this.selecting = false;
 					}
 				}
@@ -191,12 +186,38 @@
 
 				if(value && value.length > 0 && this.chipElement){
 					this.selecting = true;
-					this.chipElement.selectedObjects = [];
-					for(var i = 0;i < value.length;i++) this.chipElement.appendSelectedObject({text:value[i]});
+					this._setValues(value);
 					this.selecting = false;
 				}
-			}
+			},
 
+			_displayDateFormatChanged: function(newDisplayDateFormar) {
+		      	if(newDisplayDateFormar != null && this.values != null && this.values.length > 0) {
+		      		this.selecting = true;
+		      		this.chipElement.selectedObjects = [];
+		      		for(var i = 0;i < this.values.length;i++){
+		      			this._formatValue(this.values[i]);
+		      		}
+		          	this.selecting = false;
+		      	}
+		      },
+
+		    _formatValue: function(value){
+          		var dateToDisplay = moment(value,this.storeDateFormat).format(this.displayDateFormat);
+          		this.chipElement.appendSelectedObject({text:dateToDisplay});
+			},
+
+		    _setValues: function(value){
+				this.chipElement.selectedObjects = [];
+				var reg = new RegExp(this.pattern, 'g');
+				var errors = false;
+				for(var i = 0;i < value.length;i++){
+					if(!reg.test(value[i])) errors = true;
+					this._formatValue(value[i]);
+				}
+				if(errors) this.errorMessage = "Valor inválido";
+				this.set("values",value);
+			}
 		});
 	</script>
 </dom-module>

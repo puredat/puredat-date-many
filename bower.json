@@ -2,7 +2,7 @@
   "name": "puredat-date-many",
   "main": "puredat-date-many.html",
   "dependencies": {
-    "polymer": "Polymer/polymer#^1.4.0",
+    "polymer": "Polymer/polymer#^1.6.0",
     "moment": "^2.20.1"
   },
   "devDependencies": {
