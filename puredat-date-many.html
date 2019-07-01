@@ -1,6 +1,8 @@
-<link rel="import" href="bower_components/polymer/polymer.html">
-<link rel="import" href="bower_components/puredat-date/puredat-date.html">
-<link rel="import" href="bower_components/puredat-paper-input-autocomplete-chips/paper-input-autocomplete-chips.html">
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../puredat-date/puredat-date.html">
+<link rel="import" href="../puredat-paper-input-autocomplete-chips/paper-input-autocomplete-chips.html">
+<script src="../moment/moment.js"></script>
+
 <!--
 	`puredat-date-many` "STRING" type, "MANY" cardinality widget.
 	
@@ -134,6 +136,7 @@
 		    	this.datePicker = this.querySelector("#datePicker");
 		    	this.chipElement = this.querySelector("paper-input-autocomplete-chips");
 		    	this.activeValue = null;
+		    	this.querySelector("puredat-date").style.display = "none";
 		    },
 
 		     /**
@@ -147,17 +150,19 @@
 			},
 
 			_openDatePicker: function(){
+				this.querySelector("puredat-date").style.display = "";
 				this.datePicker.click();
 			},
 
 			_activeValueChanged: function(value){
+				this.querySelector("puredat-date").style.display = "none";
 				if(this.selecting) return;
 
 				if(this.chipElement && value){
 					this.selecting = true;
 					var newValue = [];
-					for(var i = 0;i < this.values.length;i++) newValue.push(this.values[i]);
-					newValue.push(value);
+					for(var i = 0;i < this.values.length;i++) newValue.push(this.values[i].trim());
+					newValue.push(value.trim());
 					this._setValues(newValue);
 					this.selecting = false;
 				}
@@ -173,7 +178,7 @@
 						var newValue = [];
 						for(var i = 0;i < src.selectedObjects.length;i++){
 							var dateToStore = moment(src.selectedObjects[i].text,this.displayDateFormat).format(this.storeDateFormat);
-							newValue.push(dateToStore);
+							newValue.push(dateToStore.trim());
 						}
 						this._setValues(newValue);
 						this.selecting = false;
