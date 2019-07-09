@@ -76,6 +76,7 @@
 				value: {
 					type: Array,
 					observer: '_valueChanged',
+					notify: true,
 					value: function(){
 						return [];
 					}
@@ -160,6 +161,7 @@
 
 				if(this.chipElement && value){
 					this.selecting = true;
+					if(!this.value) this.value = [];
 					var newValue = [];
 					for(var i = 0;i < this.value.length;i++) newValue.push(this.value[i].trim());
 					newValue.push(value.trim());
